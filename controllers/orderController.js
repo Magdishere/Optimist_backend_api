@@ -1,0 +1,221 @@
+const Order = require('../models/Order');
+const Product = require('../models/Product');
+
+// @desc    Create new order
+// @route   POST /api/orders
+exports.createOrder = async (req, res) => {
+  try {
+    const { 
+      orderItems, 
+      deliveryFee, 
+      paymentMethod, 
+      orderType, 
+      shippingAddress 
+    } = req.body;
+
+    if (!orderItems || orderItems.length === 0) {
+      return res.status(400).json({ success: false, message: 'No order items' });
+    }
+
+    let subtotal = 0;
+    const processedItems = [];
+
+    // Validate products and calculate dynamic pricing
+    for (const item of orderItems) {
+      const product = await Product.findById(item.product);
+      if (!product) {
+        return res.status(404).json({ success: false, message: `Product ${item.product} not found` });
+      }
+
+      if (!product.isAvailable) {
+        return res.status(400).json({ success: false, message: `Product ${product.name} is currently unavailable` });
+      }
+
+      let itemPrice = product.basePrice;
+
+      // Add variant price if selected
+      if (item.variant) {
+        const variantRef = product.variants.find(v => v.name === item.variant.name);
+        if (variantRef) {
+          itemPrice = variantRef.price; // Use variant price as base if specified
+        }
+      }
+
+      // Add add-ons modifier
+      if (item.selectedAddOns && item.selectedAddOns.length > 0) {
+        item.selectedAddOns.forEach(addOn => {
+          const addOnRef = product.addOns.find(a => a.name === addOn.name);
+          if (addOnRef) itemPrice += addOnRef.price;
+        });
+      }
+
+      const totalPriceForItem = itemPrice * item.quantity;
+      subtotal += totalPriceForItem;
+
+      processedItems.push({
+        ...item,
+        name: product.name,
+        priceAtPurchase: itemPrice
+      });
+    }
+
+    const tax = subtotal * 0.10; // 10% Tax
+    const actualDeliveryFee = orderType === 'delivery' ? (deliveryFee || 5) : 0;
+    const totalPrice = subtotal + tax + actualDeliveryFee;
+
+    // Determine initial status based on payment method
+    let initialStatus = 'pending';
+    let paymentStatus = 'pending';
+    
+    if (paymentMethod === 'online') {
+      initialStatus = 'awaiting_payment';
+    } else if (paymentMethod === 'cod') {
+      paymentStatus = 'cash_on_delivery';
+    }
+
+    const order = await Order.create({
+      user: req.user._id,
+      orderItems: processedItems,
+      subtotal,
+      tax,
+      deliveryFee: actualDeliveryFee,
+      totalPrice,
+      status: initialStatus,
+      paymentMethod,
+      paymentStatus,
+      orderType,
+      shippingAddress,
+      orderHistory: [{
+        status: initialStatus,
+        note: 'Order created'
+      }]
+    });
+
+    // If online payment, integration logic would go here (e.g., Stripe Session)
+    let paymentUrl = null;
+    if (paymentMethod === 'online') {
+      // paymentUrl = await createStripeSession(order);
+    }
+
+    res.status(201).json({ 
+      success: true, 
+      data: order,
+      paymentUrl // Return this to frontend to redirect
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+// @desc    Get logged in user orders
+// @route   GET /api/orders/my-orders
+exports.getUserOrders = async (req, res) => {
+  try {
+    const orders = await Order.find({ user: req.user._id }).sort('-createdAt');
+    res.status(200).json({ success: true, count: orders.length, data: orders });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+// @desc    Get order by ID
+// @route   GET /api/orders/:id
+exports.getOrderById = async (req, res) => {
+  try {
+    const order = await Order.findById(req.params.id).populate('user', 'name email');
+    if (!order) return res.status(404).json({ success: false, message: 'Order not found' });
+
+    // Check ownership
+    if (order.user._id.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
+      return res.status(401).json({ success: false, message: 'Not authorized' });
+    }
+
+    res.status(200).json({ success: true, data: order });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+// @desc    Get all orders (Admin Only)
+// @route   GET /api/orders
+exports.getAllOrders = async (req, res) => {
+  try {
+    const orders = await Order.find().populate('user', 'id name firstName lastName').sort('-createdAt');
+    res.status(200).json({ success: true, count: orders.length, data: orders });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+// @desc    Update order status (Admin Only)
+// @route   PUT /api/orders/:id/status
+exports.updateOrderStatus = async (req, res) => {
+  try {
+    const { status, note } = req.body;
+    
+    const order = await Order.findById(req.params.id);
+    if (!order) return res.status(404).json({ success: false, message: 'Order not found' });
+
+    order.status = status;
+    order.orderHistory.push({
+      status,
+      note: note || `Status updated to ${status}`
+    });
+
+    // Special handling for delivery/payment
+    if (status === 'delivered') {
+      if (order.paymentMethod === 'cod') {
+        order.isPaid = true;
+        order.paidAt = Date.now();
+        order.paymentStatus = 'paid';
+      }
+    }
+
+    await order.save();
+    
+    res.status(200).json({ success: true, data: order });
+  } catch (err) {
+    res.status(400).json({ success: false, message: err.message });
+  }
+};
+
+// @desc    Cancel order
+// @route   PUT /api/orders/:id/cancel
+exports.cancelOrder = async (req, res) => {
+  try {
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ success: false, message: 'Order not found' });
+    }
+
+    // Check ownership
+    if (order.user.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
+      return res.status(401).json({ success: false, message: 'Not authorized to cancel this order' });
+    }
+
+    // Only allow cancellation for certain statuses
+    const cancellableStatuses = ['pending', 'awaiting_payment'];
+    if (!cancellableStatuses.includes(order.status) && req.user.role !== 'admin') {
+      return res.status(400).json({ 
+        success: false, 
+        message: `Order cannot be cancelled because it is already ${order.status}` 
+      });
+    }
+
+    order.status = 'cancelled';
+    order.orderHistory.push({
+      status: 'cancelled',
+      note: `Order cancelled by ${req.user.role === 'admin' ? 'Admin' : 'Customer'}`
+    });
+
+    await order.save();
+
+    res.status(200).json({
+      success: true,
+      data: order
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
