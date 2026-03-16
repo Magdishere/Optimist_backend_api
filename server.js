@@ -31,23 +31,26 @@ if (process.env.NODE_ENV === 'development') {
 app.use(helmet());
 
 const allowedOrigins = [
-  'https://magdishere.github.io',  // your deployed frontend
-  'http://localhost:3000'          // for local dev
+  'https://magdishere.github.io',
+  'http://localhost:3000'
 ];
 
 app.use(cors({
   origin: function(origin, callback) {
-    // allow requests with no origin like Postman or mobile apps
-    if (!origin) return callback(null, true);
+    if (!origin) return callback(null, true); // allow Postman or server-to-server
     if (allowedOrigins.indexOf(origin) === -1) {
-      const msg = `The CORS policy for this site does not allow access from the specified Origin: ${origin}`;
+      const msg = `CORS blocked for origin ${origin}`;
       return callback(new Error(msg), false);
     }
     return callback(null, true);
   },
   methods: ['GET','POST','PUT','DELETE','OPTIONS'],
-  credentials: true, // allow cookies or Authorization headers
+  allowedHeaders: ['Content-Type', 'Authorization'], // add allowed headers
+  credentials: true
 }));
+
+// **Handle OPTIONS requests globally**
+app.options('*', cors()); // <-- important for preflight
 
 // Mount routes
 app.use('/api/auth', require('./routes/authRoutes'));
