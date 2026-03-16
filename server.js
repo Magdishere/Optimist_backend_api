@@ -29,7 +29,6 @@ if (process.env.NODE_ENV === 'development') {
 
 // Security middlewares
 app.use(helmet());
-app.use(cors());
 
 const allowedOrigins = [
   'https://magdishere.github.io',  // your deployed frontend
