@@ -37,7 +37,7 @@ const allowedOrigins = [
 
 app.use(cors({
   origin: function(origin, callback) {
-    if (!origin) return callback(null, true); // allow Postman or server-to-server
+    if (!origin) return callback(null, true);
     if (allowedOrigins.indexOf(origin) === -1) {
       const msg = `CORS blocked for origin ${origin}`;
       return callback(new Error(msg), false);
@@ -45,12 +45,9 @@ app.use(cors({
     return callback(null, true);
   },
   methods: ['GET','POST','PUT','DELETE','OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'], // add allowed headers
+  allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true
 }));
-
-// **Handle OPTIONS requests globally**
-app.options('*', cors()); // <-- important for preflight
 
 // Mount routes
 app.use('/api/auth', require('./routes/authRoutes'));
