@@ -16,27 +16,26 @@ const app = express();
 // Body parser
 app.use(express.json());
 
+// CORS setup
 const allowedOrigins = [
-  'https://magdishere.github.io',  // your deployed frontend
-  'http://localhost:3000'          // for local development
+  'http://localhost:3000',
+  'http://localhost:3001',
+  'https://magdishere.github.io'
 ];
 
-app.use(cors({
-  origin: function(origin, callback) {
-    // allow requests with no origin (like Postman or mobile apps)
-    if (!origin) return callback(null, true);
-
-    if (allowedOrigins.indexOf(origin) === -1) {
-      const msg = `The CORS policy does not allow access from ${origin}`;
-      return callback(new Error(msg), false);
-    }
-    return callback(null, true);
-  },
-  methods: ['GET','POST','PUT','DELETE','OPTIONS'],
-  allowedHeaders: ['Content-Type','Authorization'],
-  credentials: true
-}));
-
+app.use(
+  cors({
+    origin: function(origin, callback) {
+      if (!origin) return callback(null, true); // allow Postman, etc.
+      if (allowedOrigins.indexOf(origin) === -1) {
+        const msg = `CORS policy: origin ${origin} not allowed`;
+        return callback(new Error(msg), false);
+      }
+      return callback(null, true);
+    },
+    credentials: true, // allow cookies
+  })
+);
 // Set static folder for uploads
 const path = require('path');
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
