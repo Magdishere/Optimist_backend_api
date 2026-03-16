@@ -86,11 +86,17 @@ exports.createProduct = async (req, res) => {
     if (typeof productData.addOns === 'string') productData.addOns = JSON.parse(productData.addOns);
 
     if (req.file) {
+      console.log('File detected for product, uploading to ImageKit...');
       productData.image = await uploadToImageKit(req.file);
+      console.log('Image uploaded successfully:', productData.image);
+    } else {
+      console.log('No file detected for product creation');
     }
+
     const product = await Product.create(productData);
     res.status(201).json({ success: true, data: product });
   } catch (err) {
+    console.error('Product Creation Error:', err.message);
     res.status(500).json({ success: false, message: err.message });
   }
 };
@@ -106,17 +112,21 @@ exports.updateProduct = async (req, res) => {
     if (typeof productData.addOns === 'string') productData.addOns = JSON.parse(productData.addOns);
 
     if (req.file) {
+      console.log('File detected for product update, uploading to ImageKit...');
       productData.image = await uploadToImageKit(req.file);
     }
+
     const product = await Product.findByIdAndUpdate(req.params.id, productData, {
       new: true,
       runValidators: true
     });
+
     if (!product) {
       return res.status(404).json({ success: false, message: 'Product not found' });
     }
     res.status(200).json({ success: true, data: product });
   } catch (err) {
+    console.error('Product Update Error:', err.message);
     res.status(500).json({ success: false, message: err.message });
   }
 };
