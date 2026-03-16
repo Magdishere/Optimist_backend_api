@@ -3,6 +3,7 @@ const dotenv = require('dotenv');
 const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
+const path = require('path');
 const connectDB = require('./config/db');
 
 // Load env vars
@@ -16,29 +17,40 @@ const app = express();
 // Body parser
 app.use(express.json());
 
-app.use(cors());
-// // CORS setup
-// const allowedOrigins = [
-//   'http://localhost:3000',
-//   'http://localhost:3001',
-//   'https://magdishere.github.io'
-// ];
+// ✅ Production-ready CORS setup
+const allowedOrigins = [
+  'http://localhost:3000',
+  'http://localhost:3001',
+  'https://magdishere.github.io'
+];
 
-// app.use(
-//   cors({
-//     origin: function(origin, callback) {
-//       if (!origin) return callback(null, true); // allow Postman, etc.
-//       if (allowedOrigins.indexOf(origin) === -1) {
-//         const msg = `CORS policy: origin ${origin} not allowed`;
-//         return callback(new Error(msg), false);
-//       }
-//       return callback(null, true);
-//     },
-//     credentials: true, // allow cookies
-//   })
-// );
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      // Allow requests like Postman / mobile apps with no origin
+      if (!origin) return callback(null, true);
+
+      if (allowedOrigins.indexOf(origin) === -1) {
+        const msg = `CORS policy: origin ${origin} not allowed`;
+        return callback(new Error(msg), false);
+      }
+      return callback(null, true);
+    },
+    credentials: true, // Allow cookies and Authorization headers
+    allowedHeaders: ['Content-Type', 'Authorization'], // Explicitly allow token headers
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], // Explicitly allow HTTP methods
+  })
+);
+
+// Handle preflight OPTIONS requests for all routes
+app.options('*', cors({
+  origin: allowedOrigins,
+  credentials: true,
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+}));
+
 // Set static folder for uploads
-const path = require('path');
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Dev logging middleware
@@ -48,11 +60,8 @@ if (process.env.NODE_ENV === 'development') {
   app.use(morgan('combined'));
 }
 
-// Security middlewares
+// Security middleware
 app.use(helmet());
-
-
-
 
 // Mount routes
 app.use('/api/auth', require('./routes/authRoutes'));
@@ -77,6 +86,5 @@ const server = app.listen(PORT, () => {
 // Handle unhandled promise rejections
 process.on('unhandledRejection', (err, promise) => {
   console.log(`Error: ${err.message}`);
-  // Close server & exit process
   server.close(() => process.exit(1));
 });
