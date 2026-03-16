@@ -1,57 +1,51 @@
 const express = require('express');
-const dotenv = require('dotenv');
 const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
-const connectDB = require('./config/db');
-
-// Load env vars
-dotenv.config();
-
-// Connect to database
-connectDB();
+const path = require('path');
 
 const app = express();
 
-// Body parser
-app.use(express.json());
+// Security middleware
+app.use(helmet());
 
-const allowedOrigins = [
-  'http://localhost:3000',
-  'http://localhost:3001',
-  'https://magdishere.github.io'
-];
-
-app.use(cors({
-  origin: function(origin, callback) {
-    if (!origin) return callback(null, true); // allows Postman, mobile apps
-    if (allowedOrigins.indexOf(origin) === -1) {
-      return callback(new Error(`CORS policy: origin ${origin} not allowed`), false);
-    }
-    return callback(null, true);
-  },
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-}));
-
-// Set static folder for uploads
-const path = require('path');
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-
-// Dev logging middleware
+// Dev logging
 if (process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'));
 } else {
   app.use(morgan('combined'));
 }
 
-// Security middlewares
-app.use(helmet());
+// --- CORS SETUP FOR RENDER + GITHUB PAGES ---
+const allowedOrigins = [
+  'http://localhost:3000',        // local dev
+  'http://localhost:3001',        // other local ports if needed
+  'https://magdishere.github.io'  // GitHub Pages frontend
+];
 
+app.use(cors({
+  origin: function(origin, callback) {
+    // allow requests with no origin (like Postman, server-to-server)
+    if (!origin) return callback(null, true);
 
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    } else {
+      return callback(new Error(`CORS policy: origin ${origin} not allowed`));
+    }
+  },
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true // allow cookies or auth headers
+}));
 
+// Body parser
+app.use(express.json());
 
-// Mount routes
+// Static folder
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+// --- ROUTES ---
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/users', require('./routes/userRoutes'));
 app.use('/api/categories', require('./routes/categoryRoutes'));
@@ -60,7 +54,7 @@ app.use('/api/orders', require('./routes/orderRoutes'));
 app.use('/api/locations', require('./routes/locationRoutes'));
 app.use('/api/payments', require('./routes/paymentRoutes'));
 
-// Health Check Route
+// Health check
 app.get('/api/health', (req, res) => {
   res.status(200).json({ success: true, status: 'Server is healthy' });
 });
@@ -74,6 +68,5 @@ const server = app.listen(PORT, () => {
 // Handle unhandled promise rejections
 process.on('unhandledRejection', (err, promise) => {
   console.log(`Error: ${err.message}`);
-  // Close server & exit process
   server.close(() => process.exit(1));
 });
