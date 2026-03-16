@@ -37,7 +37,7 @@ app.use(cors({
 }));
 
 // Make sure preflight requests are handled
-app.options('*', cors());
+app.options('/*', cors());
 // Set static folder for uploads
 const path = require('path');
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
