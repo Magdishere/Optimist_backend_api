@@ -1,5 +1,13 @@
 const express = require('express');
-const { createOrder, getUserOrders, getOrderById, getAllOrders, updateOrderStatus, cancelOrder } = require('../controllers/orderController');
+const { 
+  createOrder, 
+  getUserOrders, 
+  getOrderById, 
+  getAllOrders, 
+  updateOrderStatus, 
+  cancelOrder,
+  getInvoice 
+} = require('../controllers/orderController');
 const { protect, authorize } = require('../middleware/authMiddleware');
 
 const router = express.Router();
@@ -11,6 +19,7 @@ router.route('/')
   .post(createOrder);
 
 router.get('/my-orders', getUserOrders);
+router.get('/:id/invoice', getInvoice);
 
 router.route('/:id')
   .get(getOrderById);

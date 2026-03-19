@@ -1,5 +1,33 @@
 const Order = require('../models/Order');
 const Product = require('../models/Product');
+const generateInvoice = require('../utils/invoiceGenerator');
+
+// @desc    Download order invoice as PDF
+// @route   GET /api/orders/:id/invoice
+exports.getInvoice = async (req, res) => {
+  try {
+    const order = await Order.findById(req.params.id)
+      .populate('user', 'name email firstName lastName')
+      .populate('branch');
+
+    if (!order) {
+      return res.status(404).json({ success: false, message: 'Order not found' });
+    }
+
+    // Check ownership
+    if (order.user._id.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
+      return res.status(401).json({ success: false, message: 'Not authorized' });
+    }
+
+    const filename = `invoice-${order._id}.pdf`;
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+
+    generateInvoice(order, res);
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
 
 // @desc    Create new order
 // @route   POST /api/orders
