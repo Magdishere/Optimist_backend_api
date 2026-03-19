@@ -55,6 +55,7 @@ exports.createOrder = async (req, res) => {
       processedItems.push({
         ...item,
         name: product.name,
+        image: product.image,
         priceAtPurchase: itemPrice
       });
     }
