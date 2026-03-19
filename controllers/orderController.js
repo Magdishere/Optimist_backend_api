@@ -7,6 +7,7 @@ exports.createOrder = async (req, res) => {
   try {
     const { 
       orderItems, 
+      branch,
       deliveryFee, 
       paymentMethod, 
       orderType, 
@@ -15,6 +16,10 @@ exports.createOrder = async (req, res) => {
 
     if (!orderItems || orderItems.length === 0) {
       return res.status(400).json({ success: false, message: 'No order items' });
+    }
+
+    if (!branch) {
+      return res.status(400).json({ success: false, message: 'Branch selection is required' });
     }
 
     let subtotal = 0;
@@ -76,6 +81,7 @@ exports.createOrder = async (req, res) => {
 
     const order = await Order.create({
       user: req.user._id,
+      branch,
       orderItems: processedItems,
       subtotal,
       tax,
@@ -112,7 +118,7 @@ exports.createOrder = async (req, res) => {
 // @route   GET /api/orders/my-orders
 exports.getUserOrders = async (req, res) => {
   try {
-    const orders = await Order.find({ user: req.user._id }).sort('-createdAt');
+    const orders = await Order.find({ user: req.user._id }).populate('branch').sort('-createdAt');
     res.status(200).json({ success: true, count: orders.length, data: orders });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
@@ -123,7 +129,7 @@ exports.getUserOrders = async (req, res) => {
 // @route   GET /api/orders/:id
 exports.getOrderById = async (req, res) => {
   try {
-    const order = await Order.findById(req.params.id).populate('user', 'name email');
+    const order = await Order.findById(req.params.id).populate('user', 'name email').populate('branch');
     if (!order) return res.status(404).json({ success: false, message: 'Order not found' });
 
     // Check ownership
@@ -141,7 +147,7 @@ exports.getOrderById = async (req, res) => {
 // @route   GET /api/orders
 exports.getAllOrders = async (req, res) => {
   try {
-    const orders = await Order.find().populate('user', 'id name firstName lastName').sort('-createdAt');
+    const orders = await Order.find().populate('user', 'id name firstName lastName').populate('branch').sort('-createdAt');
     res.status(200).json({ success: true, count: orders.length, data: orders });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });

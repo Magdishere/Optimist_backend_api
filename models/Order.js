@@ -6,6 +6,11 @@ const orderSchema = new mongoose.Schema({
     ref: 'User',
     required: true
   },
+  branch: {
+    type: mongoose.Schema.ObjectId,
+    ref: 'Location',
+    required: true
+  },
   orderItems: [
     {
       product: {
