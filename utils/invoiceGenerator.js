@@ -12,7 +12,7 @@ const generateInvoice = (order, dataStream) => {
 
     // Header Styles
     const THEME_PRIMARY = '#000000'; 
-    const logoPath = path.join(__dirname, '../assets/logo.png');
+    const logoPath = path.join(__dirname, '../assets/optimist_logo.png');
 
     doc.pipe(dataStream);
 
