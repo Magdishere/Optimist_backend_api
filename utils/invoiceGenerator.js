@@ -1,6 +1,4 @@
 const PDFDocument = require('pdfkit');
-const path = require('path');
-const fs = require('fs');
 
 /**
  * Generates a themed PDF invoice for an order.
@@ -15,7 +13,6 @@ const generateInvoice = (order, dataStream) => {
     const COLOR_PRIMARY = '#4a3728'; // Deep Espresso Brown
     const COLOR_ACCENT = '#8b5e3c';  // Coffee Brown
     const COLOR_BORDER = '#e6dfd9';  // Muted Brown
-    const logoPath = path.join(__dirname, '../assets/optimist_logo_512.png');
 
     doc.pipe(dataStream);
 
@@ -29,10 +26,18 @@ const generateInvoice = (order, dataStream) => {
       .rect(0, 0, 600, 150)
       .fill(COLOR_PRIMARY);
 
-    // Add Logo if exists
-    if (fs.existsSync(logoPath)) {
-        doc.image(logoPath, 50, 35, { width: 50 });
-    }
+    // Draw Coffee Cup Icon (Vector)
+    doc
+      .save()
+      .translate(50, 40)
+      .scale(2)
+      .path('M17 8h1a4 4 0 1 1 0 8h-1')
+      .path('M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z')
+      .path('M6 2v2M10 2v2M14 2v2')
+      .lineWidth(1.5)
+      .strokeColor('#FFFFFF')
+      .stroke()
+      .restore();
 
     doc
       .fillColor('#FFFFFF')
