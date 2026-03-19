@@ -10,9 +10,9 @@ const generateInvoice = (order, dataStream) => {
 
     // Brown Theme Colors
     const COLOR_BG = '#fdfaf7';      // Light Cream
-    const COLOR_PRIMARY = '#4a3728'; // Deep Espresso Brown
-    const COLOR_ACCENT = '#8b5e3c';  // Coffee Brown
-    const COLOR_BORDER = '#e6dfd9';  // Muted Brown
+    const COLOR_PRIMARY = '#5C4033'; // Website Primary Brown
+    const COLOR_ACCENT = '#A08C7D';  // Website Accent Brown
+    const COLOR_BORDER = '#E8D8C3';  // Website Border Brown
 
     doc.pipe(dataStream);
 
@@ -84,7 +84,7 @@ const generateInvoice = (order, dataStream) => {
     // --- TABLE HEADER ---
     doc
       .rect(50, 260, 500, 25)
-      .fill(COLOR_ACCENT);
+      .fill(COLOR_PRIMARY);
 
     doc
       .fillColor('#FFFFFF')
