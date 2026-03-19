@@ -1,4 +1,6 @@
 const PDFDocument = require('pdfkit');
+const path = require('path');
+const fs = require('fs');
 
 /**
  * Generates a themed PDF invoice for an order.
@@ -9,8 +11,8 @@ const generateInvoice = (order, dataStream) => {
     const doc = new PDFDocument({ margin: 50, size: 'A4' });
 
     // Header Styles
-    const THEME_PRIMARY = '#000000'; // Replace with your actual theme primary color if different
-    const THEME_ACCENT = '#ea580c';  // Example accent color from your theme (Orange/Amber)
+    const THEME_PRIMARY = '#000000'; 
+    const logoPath = path.join(__dirname, '../assets/logo.png');
 
     doc.pipe(dataStream);
 
@@ -19,16 +21,21 @@ const generateInvoice = (order, dataStream) => {
       .rect(0, 0, 600, 150)
       .fill(THEME_PRIMARY);
 
+    // Add Logo if exists
+    if (fs.existsSync(logoPath)) {
+        doc.image(logoPath, 50, 35, { width: 50 });
+    }
+
     doc
       .fillColor('#FFFFFF')
-      .fontSize(40)
+      .fontSize(32)
       .font('Helvetica-Bold')
-      .text('OPTIMIST.', 50, 45, { characterSpacing: 2 });
+      .text('OPTIMIST.', 115, 45, { characterSpacing: 2 });
 
     doc
       .fontSize(10)
       .font('Helvetica-Bold')
-      .text('BETTER COFFEE. BETTER MOOD.', 50, 95, { characterSpacing: 1.5 });
+      .text('BETTER COFFEE. BETTER MOOD.', 115, 85, { characterSpacing: 1.5 });
 
     doc
       .fontSize(12)
