@@ -10,16 +10,24 @@ const fs = require('fs');
 const generateInvoice = (order, dataStream) => {
     const doc = new PDFDocument({ margin: 50, size: 'A4' });
 
-    // Header Styles
-    const THEME_PRIMARY = '#000000'; 
-    const logoPath = path.join(__dirname, '../assets/optimist_logo.png');
+    // Brown Theme Colors
+    const COLOR_BG = '#fdfaf7';      // Light Cream
+    const COLOR_PRIMARY = '#4a3728'; // Deep Espresso Brown
+    const COLOR_ACCENT = '#8b5e3c';  // Coffee Brown
+    const COLOR_BORDER = '#e6dfd9';  // Muted Brown
+    const logoPath = path.join(__dirname, '../assets/optimist_logo_512.png');
 
     doc.pipe(dataStream);
+
+    // --- BACKGROUND ---
+    doc
+      .rect(0, 0, 600, 1000)
+      .fill(COLOR_BG);
 
     // --- HEADER ---
     doc
       .rect(0, 0, 600, 150)
-      .fill(THEME_PRIMARY);
+      .fill(COLOR_PRIMARY);
 
     // Add Logo if exists
     if (fs.existsSync(logoPath)) {
@@ -48,7 +56,7 @@ const generateInvoice = (order, dataStream) => {
 
     // --- BRANCH & INFO ---
     doc
-      .fillColor('#000000')
+      .fillColor(COLOR_PRIMARY)
       .fontSize(8)
       .font('Helvetica-Bold')
       .text('LOCATION', 50, 180, { characterSpacing: 1 })
@@ -71,7 +79,7 @@ const generateInvoice = (order, dataStream) => {
     // --- TABLE HEADER ---
     doc
       .rect(50, 260, 500, 25)
-      .fill(THEME_PRIMARY);
+      .fill(COLOR_ACCENT);
 
     doc
       .fillColor('#FFFFFF')
@@ -84,7 +92,7 @@ const generateInvoice = (order, dataStream) => {
 
     // --- ITEMS ---
     let yPos = 300;
-    doc.fillColor('#000000').font('Helvetica');
+    doc.fillColor(COLOR_PRIMARY).font('Helvetica');
 
     order.orderItems.forEach(item => {
       doc
@@ -106,7 +114,7 @@ const generateInvoice = (order, dataStream) => {
         .moveTo(50, yPos - 15)
         .lineTo(550, yPos - 15)
         .lineWidth(0.5)
-        .strokeColor('#EEEEEE')
+        .strokeColor(COLOR_BORDER)
         .stroke();
     });
 
@@ -136,7 +144,7 @@ const generateInvoice = (order, dataStream) => {
     yPos += 30;
     doc
       .rect(340, yPos - 10, 210, 40)
-      .fill(THEME_PRIMARY);
+      .fill(COLOR_PRIMARY);
 
     doc
       .fillColor('#FFFFFF')
@@ -147,7 +155,7 @@ const generateInvoice = (order, dataStream) => {
 
     // --- FOOTER ---
     doc
-      .fillColor('#CCCCCC')
+      .fillColor(COLOR_ACCENT)
       .fontSize(8)
       .text('THANK YOU FOR YOUR BUSINESS. STAY OPTIMISTIC.', 50, 750, { align: 'center', characterSpacing: 2 });
 
