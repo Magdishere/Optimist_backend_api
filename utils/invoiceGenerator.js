@@ -77,7 +77,7 @@ const generateInvoice = (order, dataStream) => {
       .text('BILL TO', 350, 180, { characterSpacing: 1 })
       .font('Helvetica')
       .fontSize(12)
-      .text(order.user ? `${order.user.name || 'CUSTOMER'}`.toUpperCase() : 'CUSTOMER', 350, 195)
+      .text(order.user ? `${order.user.firstName || ''} ${order.user.lastName || ''}`.trim().toUpperCase() || 'CUSTOMER' : 'CUSTOMER', 350, 195)
       .fontSize(9)
       .text(order.shippingAddress ? `${order.shippingAddress.street || ''}, ${order.shippingAddress.city || ''}` : 'In-Store', 350, 212);
 

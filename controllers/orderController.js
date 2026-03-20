@@ -7,7 +7,7 @@ const generateInvoice = require('../utils/invoiceGenerator');
 exports.getInvoice = async (req, res) => {
   try {
     const order = await Order.findById(req.params.id)
-      .populate('user', 'name email firstName lastName')
+      .populate('user', 'firstName lastName')
       .populate('branch');
 
     if (!order) {
