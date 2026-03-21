@@ -54,7 +54,7 @@ exports.getProducts = async (req, res) => {
   try {
     const query = {};
     if (req.query.branch) {
-      query.branches = req.query.branch;
+      query.branches = { $in: [req.query.branch] };
     }
     const products = await Product.find(query).populate('category');
     res.status(200).json({ success: true, count: products.length, data: products });

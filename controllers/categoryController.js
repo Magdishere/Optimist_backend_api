@@ -22,7 +22,7 @@ exports.getCategories = async (req, res) => {
   try {
     const query = {};
     if (req.query.branch) {
-      query.branches = req.query.branch;
+      query.branches = { $in: [req.query.branch] };
     }
     const categories = await Category.find(query).sort('displayOrder');
     res.status(200).json({ success: true, count: categories.length, data: categories });
