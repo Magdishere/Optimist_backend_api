@@ -52,6 +52,12 @@ const productSchema = new mongoose.Schema({
     type: Boolean,
     default: true
   },
+  branches: [
+    {
+      type: mongoose.Schema.ObjectId,
+      ref: 'Location'
+    }
+  ],
   preparationTime: {
     type: Number, // in minutes
     default: 5

@@ -52,7 +52,11 @@ exports.getTopProducts = async (req, res) => {
 // @access  Public
 exports.getProducts = async (req, res) => {
   try {
-    const products = await Product.find().populate('category');
+    const query = {};
+    if (req.query.branch) {
+      query.branches = req.query.branch;
+    }
+    const products = await Product.find(query).populate('category');
     res.status(200).json({ success: true, count: products.length, data: products });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
@@ -81,9 +85,10 @@ exports.createProduct = async (req, res) => {
   try {
     const productData = { ...req.body };
     
-    // Parse variants and addOns if they come as strings (common with FormData)
+    // Parse JSON strings from FormData
     if (typeof productData.variants === 'string') productData.variants = JSON.parse(productData.variants);
     if (typeof productData.addOns === 'string') productData.addOns = JSON.parse(productData.addOns);
+    if (typeof productData.branches === 'string') productData.branches = JSON.parse(productData.branches);
 
     if (req.file) {
       console.log('File detected for product, uploading to ImageKit...');
@@ -110,6 +115,7 @@ exports.updateProduct = async (req, res) => {
 
     if (typeof productData.variants === 'string') productData.variants = JSON.parse(productData.variants);
     if (typeof productData.addOns === 'string') productData.addOns = JSON.parse(productData.addOns);
+    if (typeof productData.branches === 'string') productData.branches = JSON.parse(productData.branches);
 
     if (req.file) {
       console.log('File detected for product update, uploading to ImageKit...');

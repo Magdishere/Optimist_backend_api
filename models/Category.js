@@ -21,7 +21,13 @@ const categorySchema = new mongoose.Schema({
   isActive: {
     type: Boolean,
     default: true
-  }
+  },
+  branches: [
+    {
+      type: mongoose.Schema.ObjectId,
+      ref: 'Location'
+    }
+  ]
 }, { timestamps: true });
 
 categorySchema.pre('save', function() {

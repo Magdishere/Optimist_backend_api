@@ -20,7 +20,11 @@ const uploadToImageKit = async (file) => {
 // @access  Public
 exports.getCategories = async (req, res) => {
   try {
-    const categories = await Category.find().sort('displayOrder');
+    const query = {};
+    if (req.query.branch) {
+      query.branches = req.query.branch;
+    }
+    const categories = await Category.find(query).sort('displayOrder');
     res.status(200).json({ success: true, count: categories.length, data: categories });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
@@ -48,6 +52,8 @@ exports.getCategory = async (req, res) => {
 exports.createCategory = async (req, res) => {
   try {
     const categoryData = { ...req.body };
+    if (typeof categoryData.branches === 'string') categoryData.branches = JSON.parse(categoryData.branches);
+    
     if (req.file) {
       categoryData.image = await uploadToImageKit(req.file);
     }
@@ -64,6 +70,8 @@ exports.createCategory = async (req, res) => {
 exports.updateCategory = async (req, res) => {
   try {
     const categoryData = { ...req.body };
+    if (typeof categoryData.branches === 'string') categoryData.branches = JSON.parse(categoryData.branches);
+
     if (req.file) {
       categoryData.image = await uploadToImageKit(req.file);
     }

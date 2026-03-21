@@ -64,6 +64,16 @@ exports.createOrder = async (req, res) => {
         return res.status(400).json({ success: false, message: `Product ${product.name} is currently unavailable` });
       }
 
+      // Check if product belongs to the selected branch
+      if (product.branches && product.branches.length > 0) {
+        if (!product.branches.includes(branch)) {
+          return res.status(400).json({ 
+            success: false, 
+            message: `Product ${product.name} is not available at this branch` 
+          });
+        }
+      }
+
       let itemPrice = product.basePrice;
 
       // Add variant price if selected
