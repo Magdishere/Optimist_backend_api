@@ -2,6 +2,8 @@ const Order = require('../models/Order');
 const Product = require('../models/Product');
 const generateInvoice = require('../utils/invoiceGenerator');
 const notificationService = require('../utils/notificationService');
+const Notification = require('../models/Notification');
+const User = require('../models/User');
 
 // @desc    Download order invoice as PDF
 // @route   GET /api/orders/:id/invoice
@@ -149,21 +151,42 @@ exports.createOrder = async (req, res) => {
       paymentUrl // Return this to frontend to redirect
     });
 
-    // Send notifications after response
+    // Send notifications and save to DB after response
     try {
-      // Notify User
+      const orderIdStr = order._id.toString();
+      const shortId = orderIdStr.slice(-6);
+
+      // Notify and Save for User
+      await Notification.create({
+        user: req.user._id,
+        title: 'Order Placed!',
+        body: `Your order #${shortId} has been received.`,
+        data: { orderId: orderIdStr },
+        type: 'order_status'
+      });
       notificationService.sendToUser(req.user._id, {
         title: 'Order Placed!',
-        body: `Your order #${order._id.toString().slice(-6)} has been received.`
-      }, { orderId: order._id.toString() });
+        body: `Your order #${shortId} has been received.`
+      }, { orderId: orderIdStr });
 
-      // Notify Admins
+      // Notify and Save for Admins
+      const admins = await User.find({ role: 'admin' }).select('_id');
+      const adminNotifications = admins.map(admin => ({
+        user: admin._id,
+        title: 'New Order Received',
+        body: `Order #${shortId} placed for EGP ${order.totalPrice}`,
+        data: { orderId: orderIdStr, type: 'new_order' },
+        type: 'new_order'
+      }));
+      await Notification.insertMany(adminNotifications);
+      
       notificationService.sendToAdmins({
         title: 'New Order Received',
-        body: `Order #${order._id.toString().slice(-6)} placed for EGP ${order.totalPrice}`
-      }, { orderId: order._id.toString(), type: 'new_order' });
+        body: `Order #${shortId} placed for EGP ${order.totalPrice}`
+      }, { orderId: orderIdStr, type: 'new_order' });
+      
     } catch (pushErr) {
-      console.error('Notification failed to send:', pushErr.message);
+      console.error('Notification storage/send failed:', pushErr.message);
     }
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
@@ -249,6 +272,16 @@ exports.updateOrderStatus = async (req, res) => {
       };
 
       if (statusMessages[status]) {
+        // Save to DB
+        await Notification.create({
+          user: order.user,
+          title: 'Order Update',
+          body: statusMessages[status],
+          data: { orderId: order._id.toString(), status },
+          type: 'order_status'
+        });
+
+        // Send Push
         notificationService.sendToUser(order.user, {
           title: 'Order Update',
           body: statusMessages[status]
