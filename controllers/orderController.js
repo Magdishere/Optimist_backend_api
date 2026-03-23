@@ -1,6 +1,7 @@
 const Order = require('../models/Order');
 const Product = require('../models/Product');
 const generateInvoice = require('../utils/invoiceGenerator');
+const notificationService = require('../utils/notificationService');
 
 // @desc    Download order invoice as PDF
 // @route   GET /api/orders/:id/invoice
@@ -147,6 +148,23 @@ exports.createOrder = async (req, res) => {
       data: order,
       paymentUrl // Return this to frontend to redirect
     });
+
+    // Send notifications after response
+    try {
+      // Notify User
+      notificationService.sendToUser(req.user._id, {
+        title: 'Order Placed!',
+        body: `Your order #${order._id.toString().slice(-6)} has been received.`
+      }, { orderId: order._id.toString() });
+
+      // Notify Admins
+      notificationService.sendToAdmins({
+        title: 'New Order Received',
+        body: `Order #${order._id.toString().slice(-6)} placed for EGP ${order.totalPrice}`
+      }, { orderId: order._id.toString(), type: 'new_order' });
+    } catch (pushErr) {
+      console.error('Notification failed to send:', pushErr.message);
+    }
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
@@ -219,6 +237,26 @@ exports.updateOrderStatus = async (req, res) => {
     await order.save();
     
     res.status(200).json({ success: true, data: order });
+
+    // Notify User about status update
+    try {
+      const statusMessages = {
+        'confirmed': 'Your order has been confirmed and is being prepared!',
+        'preparing': 'We are currently preparing your delicious meal.',
+        'out_for_delivery': 'Your order is out for delivery! Get ready.',
+        'delivered': 'Order delivered. Enjoy your meal!',
+        'cancelled': 'Your order has been cancelled.'
+      };
+
+      if (statusMessages[status]) {
+        notificationService.sendToUser(order.user, {
+          title: 'Order Update',
+          body: statusMessages[status]
+        }, { orderId: order._id.toString(), status });
+      }
+    } catch (pushErr) {
+      console.error('Status update notification failed:', pushErr.message);
+    }
   } catch (err) {
     res.status(400).json({ success: false, message: err.message });
   }

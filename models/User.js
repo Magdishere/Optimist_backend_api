@@ -26,7 +26,12 @@ const userSchema = new mongoose.Schema({
     type: String,
     enum: ['user', 'admin'],
     default: 'user'
-  }
+  },
+  fcmTokens: [
+    {
+      type: String
+    }
+  ]
 }, { timestamps: true });
 
 // Hashing password before saving
