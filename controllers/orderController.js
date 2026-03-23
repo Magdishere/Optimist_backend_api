@@ -174,7 +174,7 @@ exports.createOrder = async (req, res) => {
       const adminNotifications = admins.map(admin => ({
         user: admin._id,
         title: 'New Order Received',
-        body: `Order #${shortId} placed for EGP ${order.totalPrice}`,
+        body: `Order #${shortId} placed for $${order.totalPrice}`,
         data: { orderId: orderIdStr, type: 'new_order' },
         type: 'new_order'
       }));
@@ -182,7 +182,7 @@ exports.createOrder = async (req, res) => {
       
       notificationService.sendToAdmins({
         title: 'New Order Received',
-        body: `Order #${shortId} placed for EGP ${order.totalPrice}`
+        body: `Order #${shortId} placed for $${order.totalPrice}`
       }, { orderId: orderIdStr, type: 'new_order' });
       
     } catch (pushErr) {
