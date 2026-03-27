@@ -34,6 +34,12 @@ exports.registerUser = async (req, res) => {
       token: generateToken(user._id),
       user: { id: user._id, firstName: user.firstName, lastName: user.lastName, phone: user.phone, role: user.role }
     });
+
+    // --- REAL-TIME WEB SOCKET EMIT ---
+    const io = req.app.get('socketio');
+    if (io) {
+      io.to('admins').emit('userRegistered', user);
+    }
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }

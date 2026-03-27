@@ -151,6 +151,12 @@ exports.createOrder = async (req, res) => {
       paymentUrl // Return this to frontend to redirect
     });
 
+    // --- REAL-TIME WEB SOCKET EMIT ---
+    const io = req.app.get('socketio');
+    if (io) {
+      io.to('admins').emit('newOrderCreated', order);
+    }
+
     // Send notifications and save to DB after response
     try {
       const orderIdStr = order._id.toString();

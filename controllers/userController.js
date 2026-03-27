@@ -67,6 +67,12 @@ exports.deleteUser = async (req, res) => {
       return res.status(404).json({ success: false, message: 'User not found' });
     }
     res.status(200).json({ success: true, data: {} });
+
+    // --- REAL-TIME WEB SOCKET EMIT ---
+    const io = req.app.get('socketio');
+    if (io) {
+      io.to('admins').emit('userDeleted', req.params.id);
+    }
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
