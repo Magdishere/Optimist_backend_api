@@ -259,6 +259,16 @@ exports.updateOrderStatus = async (req, res) => {
 
     await order.save();
     
+    // --- REAL-TIME WEB SOCKET EMIT ---
+    const io = req.app.get('socketio');
+    if (io) {
+      // Emit to the user's specific room
+      io.to(order.user.toString()).emit('orderStatusUpdated', order);
+      
+      // Also emit to all admins if they are watching
+      io.to('admins').emit('adminOrderStatusUpdated', order);
+    }
+    
     res.status(200).json({ success: true, data: order });
 
     // Notify User about status update

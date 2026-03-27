@@ -74,6 +74,33 @@ const server = app.listen(PORT, () => {
   console.log(`Server running in ${process.env.NODE_ENV || 'production'} mode on port ${PORT}`);
 });
 
+// --- SOCKET.IO SETUP ---
+const { Server } = require('socket.io');
+const io = new Server(server, {
+  cors: {
+    origin: allowedOrigins,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    credentials: true
+  }
+});
+
+// Attach io to app to be accessible in controllers
+app.set('socketio', io);
+
+io.on('connection', (socket) => {
+  console.log(`New client connected: ${socket.id}`);
+
+  // User can join a room named after their ID to receive private updates
+  socket.on('join', (userId) => {
+    socket.join(userId);
+    console.log(`User ${userId} joined their private room`);
+  });
+
+  socket.on('disconnect', () => {
+    console.log('Client disconnected');
+  });
+});
+
 // Handle unhandled promise rejections
 process.on('unhandledRejection', (err, promise) => {
   console.log(`Error: ${err.message}`);
