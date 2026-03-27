@@ -251,7 +251,7 @@ exports.getOrderById = async (req, res) => {
 exports.getAllOrders = async (req, res) => {
   try {
     const showArchived = req.query.archived === 'true';
-    const query = showArchived ? {} : { isArchived: false };
+    const query = { isArchived: showArchived };
     
     const orders = await Order.find(query).populate('user', 'id name firstName lastName').populate('branch').sort('-createdAt');
     res.status(200).json({ success: true, count: orders.length, data: orders });
@@ -269,6 +269,12 @@ exports.archiveOrder = async (req, res) => {
 
     order.isArchived = !order.isArchived;
     await order.save();
+
+    // --- REAL-TIME WEB SOCKET EMIT ---
+    const io = req.app.get('socketio');
+    if (io) {
+      io.to('admins').emit('adminOrderStatusUpdated', order);
+    }
 
     res.status(200).json({ success: true, data: order, message: `Order ${order.isArchived ? 'archived' : 'restored'}` });
   } catch (err) {
