@@ -45,3 +45,36 @@ exports.markAsRead = async (req, res) => {
     res.status(500).json({ success: false, message: err.message });
   }
 };
+
+// @desc    Delete single notification
+// @route   DELETE /api/notifications/:id
+// @access  Private
+exports.deleteNotification = async (req, res) => {
+  try {
+    const notification = await Notification.findById(req.params.id);
+    if (!notification) return res.status(404).json({ success: false, message: 'Notification not found' });
+
+    // Check ownership
+    if (notification.user.toString() !== req.user.id && req.user.role !== 'admin') {
+      return res.status(401).json({ success: false, message: 'Not authorized' });
+    }
+
+    await notification.deleteOne();
+
+    res.status(200).json({ success: true, message: 'Notification deleted' });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+// @desc    Clear all my notifications
+// @route   DELETE /api/notifications/clear-all
+// @access  Private
+exports.clearAllNotifications = async (req, res) => {
+  try {
+    await Notification.deleteMany({ user: req.user.id });
+    res.status(200).json({ success: true, message: 'All notifications cleared' });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};

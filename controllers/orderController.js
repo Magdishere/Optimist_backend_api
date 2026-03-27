@@ -226,10 +226,29 @@ exports.getOrderById = async (req, res) => {
 // @route   GET /api/orders
 exports.getAllOrders = async (req, res) => {
   try {
-    const orders = await Order.find().populate('user', 'id name firstName lastName').populate('branch').sort('-createdAt');
+    const showArchived = req.query.archived === 'true';
+    const query = showArchived ? {} : { isArchived: false };
+    
+    const orders = await Order.find(query).populate('user', 'id name firstName lastName').populate('branch').sort('-createdAt');
     res.status(200).json({ success: true, count: orders.length, data: orders });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+// @desc    Archive/Unarchive order (Admin Only)
+// @route   PUT /api/orders/:id/archive
+exports.archiveOrder = async (req, res) => {
+  try {
+    const order = await Order.findById(req.params.id);
+    if (!order) return res.status(404).json({ success: false, message: 'Order not found' });
+
+    order.isArchived = !order.isArchived;
+    await order.save();
+
+    res.status(200).json({ success: true, data: order, message: `Order ${order.isArchived ? 'archived' : 'restored'}` });
+  } catch (err) {
+    res.status(400).json({ success: false, message: err.message });
   }
 };
 

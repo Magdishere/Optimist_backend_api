@@ -100,6 +100,10 @@ const orderSchema = new mongoose.Schema({
     default: false
   },
   paidAt: Date,
+  isArchived: {
+    type: Boolean,
+    default: false
+  },
   estimatedTime: Number, // in minutes
   orderHistory: [
     {
