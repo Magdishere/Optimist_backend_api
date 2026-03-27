@@ -175,6 +175,15 @@ exports.createOrder = async (req, res) => {
         body: `Your order #${shortId} has been received.`
       }, { orderId: orderIdStr });
 
+      // Emit socket for real-time bell update
+      if (io) {
+        io.to(req.user._id.toString()).emit('newNotification', {
+          title: 'Order Placed!',
+          body: `Your order #${shortId} has been received.`,
+          isRead: false
+        });
+      }
+
       // Notify and Save for Admins
       const admins = await User.find({ role: 'admin' }).select('_id');
       const adminNotifications = admins.map(admin => ({
@@ -190,6 +199,15 @@ exports.createOrder = async (req, res) => {
         title: 'New Order Received',
         body: `Order #${shortId} placed for $${order.totalPrice}`
       }, { orderId: orderIdStr, type: 'new_order' });
+
+      // Emit socket for all admins
+      if (io) {
+        io.to('admins').emit('newNotification', {
+          title: 'New Order Received',
+          body: `Order #${shortId} placed for $${order.totalPrice}`,
+          isRead: false
+        });
+      }
       
     } catch (pushErr) {
       console.error('Notification storage/send failed:', pushErr.message);
@@ -325,6 +343,15 @@ exports.updateOrderStatus = async (req, res) => {
           title: 'Order Update',
           body: statusMessages[status]
         }, { orderId: order._id.toString(), status });
+
+        // Emit socket for real-time bell update
+        if (io) {
+          io.to(order.user.toString()).emit('newNotification', {
+            title: 'Order Update',
+            body: statusMessages[status],
+            isRead: false
+          });
+        }
       }
     } catch (pushErr) {
       console.error('Status update notification failed:', pushErr.message);
