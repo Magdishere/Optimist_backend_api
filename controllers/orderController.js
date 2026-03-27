@@ -133,6 +133,7 @@ exports.createOrder = async (req, res) => {
       paymentStatus,
       orderType,
       shippingAddress,
+      isArchived: false,
       orderHistory: [{
         status: initialStatus,
         note: 'Order created'
@@ -312,14 +313,11 @@ exports.updateOrderStatus = async (req, res) => {
     const io = req.app.get('socketio');
     if (io) {
       const userRoom = order.user.toString();
-      console.log(`[SOCKET] Emitting update for order ${order._id} to user room: ${userRoom}`);
       // Emit to the user's specific room
       io.to(userRoom).emit('orderStatusUpdated', order);
       
       // Also emit to all admins if they are watching
       io.to('admins').emit('adminOrderStatusUpdated', order);
-    } else {
-      console.warn('[SOCKET] io instance not found in app');
     }
     
     res.status(200).json({ success: true, data: order });

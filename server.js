@@ -92,17 +92,9 @@ io.on('connection', (socket) => {
 
   // User can join a room named after their ID to receive private updates
   socket.on('join', (userId) => {
-    if (!userId) {
-      console.warn(`[SOCKET] Client ${socket.id} attempted to join without a userId`);
-      return;
-    }
+    if (!userId) return;
     socket.join(userId.toString());
     console.log(`[SOCKET] Client ${socket.id} (User: ${userId}) joined their room`);
-    
-    // Check if user is admin (optional, let's just log for now)
-    if (userId === 'admins') {
-      console.log(`[SOCKET] Admin dashboard connected to 'admins' room`);
-    }
   });
 
   socket.on('disconnect', () => {
