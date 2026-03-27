@@ -88,16 +88,25 @@ const io = new Server(server, {
 app.set('socketio', io);
 
 io.on('connection', (socket) => {
-  console.log(`New client connected: ${socket.id}`);
+  console.log(`[SOCKET] New client connected: ${socket.id}`);
 
   // User can join a room named after their ID to receive private updates
   socket.on('join', (userId) => {
-    socket.join(userId);
-    console.log(`User ${userId} joined their private room`);
+    if (!userId) {
+      console.warn(`[SOCKET] Client ${socket.id} attempted to join without a userId`);
+      return;
+    }
+    socket.join(userId.toString());
+    console.log(`[SOCKET] Client ${socket.id} (User: ${userId}) joined their room`);
+    
+    // Check if user is admin (optional, let's just log for now)
+    if (userId === 'admins') {
+      console.log(`[SOCKET] Admin dashboard connected to 'admins' room`);
+    }
   });
 
   socket.on('disconnect', () => {
-    console.log('Client disconnected');
+    console.log(`[SOCKET] Client disconnected: ${socket.id}`);
   });
 });
 

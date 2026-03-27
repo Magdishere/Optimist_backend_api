@@ -262,11 +262,15 @@ exports.updateOrderStatus = async (req, res) => {
     // --- REAL-TIME WEB SOCKET EMIT ---
     const io = req.app.get('socketio');
     if (io) {
+      const userRoom = order.user.toString();
+      console.log(`[SOCKET] Emitting update for order ${order._id} to user room: ${userRoom}`);
       // Emit to the user's specific room
-      io.to(order.user.toString()).emit('orderStatusUpdated', order);
+      io.to(userRoom).emit('orderStatusUpdated', order);
       
       // Also emit to all admins if they are watching
       io.to('admins').emit('adminOrderStatusUpdated', order);
+    } else {
+      console.warn('[SOCKET] io instance not found in app');
     }
     
     res.status(200).json({ success: true, data: order });
