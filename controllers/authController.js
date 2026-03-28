@@ -57,7 +57,7 @@ exports.loginUser = async (req, res) => {
     }
 
     // Check for user (and include password)
-    const user = await User.findOne({ phone }).select('+password');
+    const user = await User.findOne({ phone, isDeleted: false }).select('+password');
     if (!user) {
       return res.status(401).json({ success: false, message: 'Invalid credentials' });
     }
@@ -89,6 +89,11 @@ exports.logoutUser = async (req, res) => {
 exports.getMe = async (req, res) => {
   try {
     const user = await User.findById(req.user.id);
+    
+    if (!user || user.isDeleted) {
+      return res.status(401).json({ success: false, message: 'Not authorized or user account deleted' });
+    }
+
     res.status(200).json({
       success: true,
       user: { id: user._id, firstName: user.firstName, lastName: user.lastName, phone: user.phone, role: user.role }
@@ -169,7 +174,16 @@ exports.updatePasswordOtp = async (req, res) => {
 // @route   DELETE /api/auth/deleteme
 exports.deleteMe = async (req, res) => {
   try {
-    await User.findByIdAndDelete(req.user.id);
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    // Soft delete
+    user.isDeleted = true;
+    user.phone = `${user.phone}_deleted_${Date.now()}`;
+    await user.save();
+
     res.status(200).json({
       success: true,
       data: {}

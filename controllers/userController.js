@@ -5,7 +5,7 @@ const User = require('../models/User');
 // @access  Private/Admin
 exports.getUsers = async (req, res) => {
   try {
-    const users = await User.find();
+    const users = await User.find({ isDeleted: false });
     res.status(200).json({ success: true, count: users.length, data: users });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
@@ -17,7 +17,7 @@ exports.getUsers = async (req, res) => {
 // @access  Private/Admin
 exports.getUser = async (req, res) => {
   try {
-    const user = await User.findById(req.params.id);
+    const user = await User.findOne({ _id: req.params.id, isDeleted: false });
     if (!user) {
       return res.status(404).json({ success: false, message: 'User not found' });
     }
@@ -44,7 +44,7 @@ exports.createUser = async (req, res) => {
 // @access  Private/Admin
 exports.updateUser = async (req, res) => {
   try {
-    const user = await User.findByIdAndUpdate(req.params.id, req.body, {
+    const user = await User.findOneAndUpdate({ _id: req.params.id, isDeleted: false }, req.body, {
       new: true,
       runValidators: true
     });
@@ -62,10 +62,16 @@ exports.updateUser = async (req, res) => {
 // @access  Private/Admin
 exports.deleteUser = async (req, res) => {
   try {
-    const user = await User.findByIdAndDelete(req.params.id);
+    const user = await User.findById(req.params.id);
     if (!user) {
       return res.status(404).json({ success: false, message: 'User not found' });
     }
+
+    // Soft delete
+    user.isDeleted = true;
+    user.phone = `${user.phone}_deleted_${Date.now()}`; // Clear phone so it can be reused
+    await user.save();
+
     res.status(200).json({ success: true, data: {} });
 
     // --- REAL-TIME WEB SOCKET EMIT ---
@@ -108,7 +114,16 @@ exports.updateProfile = async (req, res) => {
 // @access  Private
 exports.deleteProfile = async (req, res) => {
   try {
-    await User.findByIdAndDelete(req.user.id);
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    // Soft delete
+    user.isDeleted = true;
+    user.phone = `${user.phone}_deleted_${Date.now()}`; // Clear phone so it can be reused
+    await user.save();
+
     res.status(200).json({
       success: true,
       data: {}

@@ -18,8 +18,13 @@ exports.protect = async (req, res, next) => {
     // Verify token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     req.user = await User.findById(decoded.id);
+
+    if (!req.user || req.user.isDeleted) {
+      return res.status(401).json({ success: false, message: 'Not authorized or user account deleted' });
+    }
+
     next();
-      } catch (err) {
+  } catch (err) {
       return res.status(401).json({ success: false, message: 'Not authorized to access this route' });
     }
   };
