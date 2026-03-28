@@ -70,7 +70,7 @@ exports.deleteUser = async (req, res) => {
     // Soft delete
     user.isDeleted = true;
     user.phone = `${user.phone}_deleted_${Date.now()}`; // Clear phone so it can be reused
-    await user.save();
+    await user.save({ validateBeforeSave: false });
 
     res.status(200).json({ success: true, data: {} });
 
@@ -122,7 +122,7 @@ exports.deleteProfile = async (req, res) => {
     // Soft delete
     user.isDeleted = true;
     user.phone = `${user.phone}_deleted_${Date.now()}`; // Clear phone so it can be reused
-    await user.save();
+    await user.save({ validateBeforeSave: false });
 
     res.status(200).json({
       success: true,
