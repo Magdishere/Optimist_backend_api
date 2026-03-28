@@ -78,6 +78,52 @@ exports.deleteUser = async (req, res) => {
   }
 };
 
+// @desc    Update current logged in user profile
+// @route   PUT /api/users/profile
+// @access  Private
+exports.updateProfile = async (req, res) => {
+  try {
+    const fieldsToUpdate = {
+      firstName: req.body.firstName,
+      lastName: req.body.lastName,
+      phone: req.body.phone
+    };
+
+    const user = await User.findByIdAndUpdate(req.user.id, fieldsToUpdate, {
+      new: true,
+      runValidators: true
+    });
+
+    res.status(200).json({
+      success: true,
+      data: user
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+// @desc    Delete current logged in user account
+// @route   DELETE /api/users/profile
+// @access  Private
+exports.deleteProfile = async (req, res) => {
+  try {
+    await User.findByIdAndDelete(req.user.id);
+    res.status(200).json({
+      success: true,
+      data: {}
+    });
+
+    // --- REAL-TIME WEB SOCKET EMIT ---
+    const io = req.app.get('socketio');
+    if (io) {
+      io.to('admins').emit('userDeleted', req.user.id);
+    }
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
 // @desc    Save FCM token
 // @route   POST /api/users/fcm-token
 // @access  Private

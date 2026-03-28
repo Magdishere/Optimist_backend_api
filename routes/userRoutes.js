@@ -5,7 +5,9 @@ const {
   createUser, 
   updateUser, 
   deleteUser,
-  saveFcmToken 
+  saveFcmToken,
+  updateProfile,
+  deleteProfile
 } = require('../controllers/userController');
 const { protect, authorize } = require('../middleware/authMiddleware');
 const router = express.Router();
@@ -14,6 +16,9 @@ router.use(protect);
 
 // User-specific routes
 router.post('/fcm-token', saveFcmToken);
+router.route('/profile')
+  .put(updateProfile)
+  .delete(deleteProfile);
 
 // Admin-only routes
 router.use(authorize('admin'));
