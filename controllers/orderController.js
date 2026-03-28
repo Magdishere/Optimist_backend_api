@@ -251,8 +251,10 @@ exports.getOrderById = async (req, res) => {
 // @route   GET /api/orders
 exports.getAllOrders = async (req, res) => {
   try {
-    const showArchived = req.query.archived === 'true';
-    const query = { isArchived: showArchived };
+    const query = {};
+    if (req.query.archived !== undefined) {
+      query.isArchived = req.query.archived === 'true';
+    }
     
     const orders = await Order.find(query).populate('user', 'id name firstName lastName').populate('branch').sort('-createdAt');
     res.status(200).json({ success: true, count: orders.length, data: orders });
