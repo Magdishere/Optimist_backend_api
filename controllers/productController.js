@@ -85,6 +85,23 @@ exports.createProduct = async (req, res) => {
   try {
     const productData = { ...req.body };
     
+    // Parse fields that might be JSON strings from FormData
+    if (typeof productData.name === 'string') {
+      try {
+        productData.name = JSON.parse(productData.name);
+      } catch (e) {
+        productData.name = { en: productData.name, ar: productData.name };
+      }
+    }
+
+    if (typeof productData.description === 'string') {
+      try {
+        productData.description = JSON.parse(productData.description);
+      } catch (e) {
+        productData.description = { en: productData.description, ar: productData.description };
+      }
+    }
+
     // Parse JSON strings from FormData
     if (typeof productData.variants === 'string') productData.variants = JSON.parse(productData.variants);
     if (typeof productData.addOns === 'string') productData.addOns = JSON.parse(productData.addOns);
@@ -118,6 +135,22 @@ exports.createProduct = async (req, res) => {
 exports.updateProduct = async (req, res) => {
   try {
     const productData = { ...req.body };
+
+    if (typeof productData.name === 'string') {
+      try {
+        productData.name = JSON.parse(productData.name);
+      } catch (e) {
+        productData.name = { en: productData.name, ar: productData.name };
+      }
+    }
+
+    if (typeof productData.description === 'string') {
+      try {
+        productData.description = JSON.parse(productData.description);
+      } catch (e) {
+        productData.description = { en: productData.description, ar: productData.description };
+      }
+    }
 
     if (typeof productData.variants === 'string') productData.variants = JSON.parse(productData.variants);
     if (typeof productData.addOns === 'string') productData.addOns = JSON.parse(productData.addOns);

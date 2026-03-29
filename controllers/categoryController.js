@@ -52,7 +52,20 @@ exports.getCategory = async (req, res) => {
 exports.createCategory = async (req, res) => {
   try {
     const categoryData = { ...req.body };
-    if (typeof categoryData.branches === 'string') categoryData.branches = JSON.parse(categoryData.branches);
+    
+    // Parse fields that might be JSON strings from FormData
+    if (typeof categoryData.name === 'string') {
+      try {
+        categoryData.name = JSON.parse(categoryData.name);
+      } catch (e) {
+        // Fallback if not JSON (legacy support)
+        categoryData.name = { en: categoryData.name, ar: categoryData.name };
+      }
+    }
+    
+    if (typeof categoryData.branches === 'string') {
+      categoryData.branches = JSON.parse(categoryData.branches);
+    }
     
     if (req.file) {
       categoryData.image = await uploadToImageKit(req.file);
@@ -70,7 +83,18 @@ exports.createCategory = async (req, res) => {
 exports.updateCategory = async (req, res) => {
   try {
     const categoryData = { ...req.body };
-    if (typeof categoryData.branches === 'string') categoryData.branches = JSON.parse(categoryData.branches);
+    
+    if (typeof categoryData.name === 'string') {
+      try {
+        categoryData.name = JSON.parse(categoryData.name);
+      } catch (e) {
+        categoryData.name = { en: categoryData.name, ar: categoryData.name };
+      }
+    }
+
+    if (typeof categoryData.branches === 'string') {
+      categoryData.branches = JSON.parse(categoryData.branches);
+    }
 
     if (req.file) {
       categoryData.image = await uploadToImageKit(req.file);
