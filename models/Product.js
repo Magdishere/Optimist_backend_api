@@ -3,15 +3,27 @@ const slugify = require('../utils/slugify');
 
 const productSchema = new mongoose.Schema({
   name: {
-    type: String,
-    required: [true, 'Please add a product name'],
-    unique: true,
-    trim: true
+    en: {
+      type: String,
+      required: [true, 'Please add a product name in English'],
+      trim: true
+    },
+    ar: {
+      type: String,
+      required: [true, 'Please add a product name in Arabic'],
+      trim: true
+    }
   },
   slug: String,
   description: {
-    type: String,
-    required: [true, 'Please add a description']
+    en: {
+      type: String,
+      required: [true, 'Please add an English description']
+    },
+    ar: {
+      type: String,
+      required: [true, 'Please add an Arabic description']
+    }
   },
   category: {
     type: mongoose.Schema.ObjectId,
@@ -65,8 +77,8 @@ const productSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 productSchema.pre('save', function() {
-  if (this.isModified('name')) {
-    this.slug = slugify(this.name);
+  if (this.isModified('name.en')) {
+    this.slug = slugify(this.name.en);
   }
 });
 
