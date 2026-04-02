@@ -100,10 +100,13 @@ const generateInvoice = (order, dataStream) => {
     doc.fillColor(COLOR_PRIMARY).font('Helvetica');
 
     order.orderItems.forEach(item => {
+      // Handle bilingual name object (always use English for invoice)
+      const itemName = typeof item.name === 'object' ? (item.name.en || item.name.ar || 'ITEM') : item.name;
+      
       doc
         .fontSize(10)
         .font('Helvetica-Bold')
-        .text(item.name.toUpperCase(), 60, yPos)
+        .text(itemName.toUpperCase(), 60, yPos)
         .fontSize(8)
         .font('Helvetica')
         .text(`${item.variant?.name || 'REGULAR'}`, 60, yPos + 12, { opacity: 0.6 });
