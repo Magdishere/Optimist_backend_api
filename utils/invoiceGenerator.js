@@ -101,7 +101,27 @@ const generateInvoice = (order, dataStream) => {
 
     order.orderItems.forEach(item => {
       // Handle bilingual name object (always use English for invoice)
-      const itemName = typeof item.name === 'object' ? (item.name.en || item.name.ar || 'ITEM') : item.name;
+      let itemName = 'ITEM';
+      if (item.name) {
+        if (typeof item.name === 'object') {
+          itemName = item.name.en || item.name.ar || 'ITEM';
+        } else if (typeof item.name === 'string') {
+          if (item.name.startsWith('{')) {
+            try {
+              // Try to fix single quotes to double quotes for parsing
+              const fixedJson = item.name.replace(/'/g, '"');
+              const parsed = JSON.parse(fixedJson);
+              itemName = parsed.en || parsed.ar || item.name;
+            } catch (e) {
+              // Fallback to regex extraction if JSON fix fails
+              const enMatch = item.name.match(/en:\s*['"](.*?)['"]/);
+              itemName = (enMatch && enMatch[1]) ? enMatch[1] : item.name;
+            }
+          } else {
+            itemName = item.name;
+          }
+        }
+      }
       
       doc
         .fontSize(10)
