@@ -1,9 +1,11 @@
 const Order = require('../models/Order');
 const Product = require('../models/Product');
+const Location = require('../models/Location');
 const generateInvoice = require('../utils/invoiceGenerator');
 const notificationService = require('../utils/notificationService');
 const Notification = require('../models/Notification');
 const User = require('../models/User');
+const { isBranchOpen } = require('../utils/branchUtils');
 
 // @desc    Download order invoice as PDF
 // @route   GET /api/orders/:id/invoice
@@ -52,6 +54,19 @@ exports.createOrder = async (req, res) => {
 
     if (!branch) {
       return res.status(400).json({ success: false, message: 'Branch selection is required' });
+    }
+
+    // Check if branch is open
+    const location = await Location.findById(branch);
+    if (!location) {
+      return res.status(404).json({ success: false, message: 'Branch not found' });
+    }
+
+    if (!isBranchOpen(location.operatingHours)) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'This branch is currently closed. Ordering is only available during opening hours.' 
+      });
     }
 
     let subtotal = 0;
