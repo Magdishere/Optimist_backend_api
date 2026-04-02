@@ -100,7 +100,10 @@ exports.createOrder = async (req, res) => {
 
       processedItems.push({
         ...item,
-        name: product.name,
+        name: {
+          en: product.name.en,
+          ar: product.name.ar
+        },
         image: product.image,
         priceAtPurchase: itemPrice
       });
