@@ -346,9 +346,10 @@ exports.updateOrderStatus = async (req, res) => {
     // Notify User about status update
     try {
       const statusMessages = {
-        'confirmed': 'Your order has been confirmed and is being prepared!',
+        'confirmed': 'Your order has been confirmed!',
         'preparing': 'We are currently preparing your delicious meal.',
-        'out_for_delivery': 'Your order is out for delivery! Get ready.',
+        'ready': 'Your order is ready! It will be with you shortly.',
+        'delivering': 'Your order is out for delivery! Get ready.',
         'delivered': 'Order delivered. Enjoy your meal!',
         'cancelled': 'Your order has been cancelled.'
       };
